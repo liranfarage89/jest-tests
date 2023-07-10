@@ -1,17 +1,23 @@
 on:
   push:
+    branches:
+      - main
 
-name: Build
 jobs:
   build:
-    name: Test
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
-
-      - run: npm install
-
-      - name: Run Integration tests
-        uses: GabrielBB/xvfb-action@v1.6
-        with:
-          run: DISPLAY=$HOST_IP:99 npm run test
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Install Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16.x
+    - run: npm install
+    - run: xvfb-run -a npm test
+      if: runner.os == 'Linux'
+    - run: npm test
+      if: runner.os != 'Linux'
